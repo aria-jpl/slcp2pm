@@ -232,8 +232,11 @@ if __name__ == '__main__':
         amp_looked_data = np.fromfile(amp_looked, dtype=np.float32).reshape(length_looked, width_looked*2)
         m = amp_looked_data[:, 0:width_looked*2:2]
         s = amp_looked_data[:, 1:width_looked*2:2]
+        # Only for S1-LAR before v2.0! Apre/Aco:
+        # logr_looked_data = np.log10(     (m+(m==0))     /    (s+(s==0))        ) * (m!=0) * (s!=0)
+
         # Only for S1-LAR v2.0 onwards! Aco/Apre (-ve value is openwater flood, +ve value is veg-flood)
-        logr_looked_data = np.log10(      (s+(s==0))     /    (m+(m==0))        ) * (m!=0) * (s!=0)
+        logr_looked_data = np.log10(       (s+(s==0))     /    (m+(m==0))        ) * (m!=0) * (s!=0)
 
         #remove white edges
         upper_edge = 0
