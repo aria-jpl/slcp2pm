@@ -12,7 +12,7 @@ logger = logging.getLogger('create_lar')
 
 BASE_PATH = os.path.dirname(__file__)
 
-CONF_FILE = "/home/ops/slcp2pm/conf/settings.conf"
+CONF_FILE = "/home/ops/verdi/ops/slcp2pm/conf/settings.conf"
 MISSION_RE = re.compile(r'^(S1\w)_')
 SLCP_RE = re.compile(r'S1-SLCP_(.+_s(\d)-.+?)-(v.+)$')
 RLKS = 7
