@@ -7,12 +7,13 @@
 
   },
   "recommended-queues" : [
-    "aria-job_worker-small",
-    "volcano-job_worker-small",
-    "sealevel-job_worker-small",
-    "tectonics-job_worker-small",
-    "change_detection-job_worker-small",
-    "urgent_response-job_worker-small"
+    "grfn-job_worker-large",
+    "aria-job_worker-large",
+    "mem-job_worker-large",
+    "dwr-job_worker-large",
+    "chevron-job_worker-small",
+    "floodmap-job_worker-small",
+    "urgent-response-job_worker-large"
   ],
   "disk_usage":"100GB",
   "params" : [
