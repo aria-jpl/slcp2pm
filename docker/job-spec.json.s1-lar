@@ -2,7 +2,9 @@
   "command":"/home/ops/verdi/ops/slcp2pm/script/create_lar.sh",
   "imported_worker_files": {
     "$HOME/.netrc": "/home/ops/.netrc",
-    "$HOME/.aws": "/home/ops/.aws"
+    "$HOME/.aws": "/home/ops/.aws",
+    "$HOME/verdi/etc/settings.conf": "/home/ops/slcp2pm/conf/settings.conf"
+
   },
   "recommended-queues" : [
     "aria-job_worker-small",

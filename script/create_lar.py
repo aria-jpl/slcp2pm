@@ -1,9 +1,7 @@
 #!/usr/bin/env python3 
 import os, sys, re, json, shutil, traceback, logging
-from subprocess import check_call
+from subprocess import check_call, check_output
 from datetime import datetime
-
-from utils.UrlUtils import UrlUtils
 from check_lar import check_lar, get_version
 
 
@@ -14,7 +12,7 @@ logger = logging.getLogger('create_lar')
 
 BASE_PATH = os.path.dirname(__file__)
 
-
+CONF_FILE = "/home/ops/slcp2pm/conf/settings.conf"
 MISSION_RE = re.compile(r'^(S1\w)_')
 SLCP_RE = re.compile(r'S1-SLCP_(.+_s(\d)-.+?)-(v.+)$')
 RLKS = 7
@@ -101,9 +99,11 @@ def main(slcp_dir):
     ds_file = os.path.join(prod_dir, "{}.dataset.json".format(id))
 
     # get endpoint configurations
-    uu = UrlUtils()
-    es_url = uu.rest_url
-    es_index = "{}_{}_s1-lar".format(uu.grq_index_prefix, version)
+    # uu = UrlUtils()
+    # es_url = uu.rest_url
+    # es_index = "{}_{}_s1-lar".format(uu.grq_index_prefix, version)
+    es_url = check_output(['grep GRQ_URL= {} | cut -d= -f2'.format(CONF_FILE)], shell=True).decode("utf-8")
+    es_index = "grq_{}_s1-lar".format(version)
 
     # check if log_amp_ratio already exists
     logger.info("GRQ url: {}".format(es_url))

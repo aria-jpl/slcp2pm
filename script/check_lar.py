@@ -3,8 +3,8 @@ from __future__ import print_function
 
 import os, sys, requests, json
 from pprint import pprint
-
-from utils.UrlUtils import UrlUtils
+from subprocess import check_output
+CONF_FILE = "/home/ops/slcp2pm/conf/settings.conf"
 
 
 def get_version():
@@ -53,9 +53,10 @@ def check_lar(es_url, es_index, id):
 
 
 if __name__ == "__main__":
-    uu = UrlUtils()
-    es_url = uu.rest_url
-    es_index = '%s_%s_s1-lar' % (uu.grq_index_prefix, get_version())
+    # uu = UrlUtils()
+    # es_url = uu.rest_url
+    es_url = check_output(['grep GRQ_URL= {} | cut -d= -f2'.format(CONF_FILE)], shell=True).decode("utf-8")
+    es_index = 'grq_%s_s1-lar' % (get_version())
     total, id = check_lar(es_url, es_index, sys.argv[1])
     if total > 0:
         with open('lar_found.txt', 'w') as f:
