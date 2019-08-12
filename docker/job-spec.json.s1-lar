@@ -1,0 +1,34 @@
+{
+  "command":"/home/ops/verdi/ops/slcp2pm/script/create_lar.sh",
+  "imported_worker_files": {
+    "$HOME/.netrc": "/home/ops/.netrc",
+    "$HOME/.aws": "/home/ops/.aws"
+  },
+  "recommended-queues" : [
+    "aria-job_worker-small",
+    "volcano-job_worker-small",
+    "sealevel-job_worker-small",
+    "tectonics-job_worker-small",
+    "change_detection-job_worker-small",
+    "urgent_response-job_worker-small"
+  ],
+  "disk_usage":"100GB",
+  "params" : [
+    { 
+      "name": "localize_url",
+      "destination": "localize"
+    },
+    {
+      "name": "path",
+      "destination": "positional"
+    },
+    {
+      "name": "lar_range_looks",
+      "destination": "context"
+    },
+    {
+      "name": "lar_azimuth_looks",
+      "destination": "context"
+    }
+  ]
+}
