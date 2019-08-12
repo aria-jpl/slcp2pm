@@ -17,8 +17,6 @@ BASE_PATH = os.path.dirname(__file__)
 
 MISSION_RE = re.compile(r'^(S1\w)_')
 SLCP_RE = re.compile(r'S1-SLCP_(.+_s(\d)-.+?)-(v.+)$')
-RLKS = 7
-ALKS = 2
 
 def create_met_json(id, version, ctx, slcp_met_file, met_file):
     """Write met json."""
