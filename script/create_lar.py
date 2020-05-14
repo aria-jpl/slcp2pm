@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 
+from builtins import str
 import os, sys, re, json, shutil, traceback, logging
 from subprocess import check_call, check_output
 from datetime import datetime
@@ -89,7 +90,7 @@ def main(slcp_dir):
     # get dataset version, set dataset ID and met/dataset JSON files
     match = SLCP_RE.search(slcp_id)
     if not match:
-        raise(RuntimeError("Failed to recognize SLCP id: {}".format(slcp_id)))
+        raise RuntimeError("Failed to recognize SLCP id: {}".format(slcp_id))
     id_base = "S1-LAR_{}".format(match.group(1))
     swath = match.group(2)
     slcp_version = match.group(3)
@@ -145,7 +146,7 @@ def main(slcp_dir):
 
 if __name__ == '__main__':
     try: status = main(sys.argv[1])
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         with open('_alt_error.txt', 'w') as f:
             f.write("%s\n" % str(e))
         with open('_alt_traceback.txt', 'w') as f:

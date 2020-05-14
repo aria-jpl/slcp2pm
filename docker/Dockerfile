@@ -1,12 +1,6 @@
-FROM hysds/pge-isce_giant:latest
+FROM hysds/isce2:latest
 
 LABEL description="PGE container for LAR product generation"
-
-# create work directory
-RUN set -ex \
- && mkdir -p /data/work \
- && chmod -R 755 /data \
- && chown -R ops:ops /data
 
 USER ops
 

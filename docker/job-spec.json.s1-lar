@@ -16,6 +16,8 @@
     "urgent-response-job_worker-large"
   ],
   "disk_usage":"100GB",
+  "soft_time_limit": 3300,
+  "time_limit": 3600,
   "params" : [
     { 
       "name": "localize_url",
