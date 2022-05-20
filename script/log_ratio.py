@@ -96,6 +96,55 @@ def create_xml(fileName, width, length, fileType):
     #image.finalizeImage()
 
 
+def post_process_lon_max(lon_looked_data):
+    # find min max:
+    lon_max = np.nanmax(lon_looked_data)
+    lon_min = np.nanmin(lon_looked_data)
+    bounds = [(lon_min,lon_max)]
+
+    if (lon_max - lon_min) > 320:
+        # we conclude that the anti-meridian has been crossed
+
+        # here we put NaNs in the interpolated area between +180/-180 boundary
+        lon_looked_data_temp = lon_looked_data.copy()
+        lon_grad_lr = np.gradient(lon_looked_data, axis=1)
+        lon_grad_rl = np.gradient(np.fliplr(lon_looked_data), axis=1)
+
+        track_dirn = None
+
+        if np.amin(lon_looked_data[:, 0]) > 0 and np.amin(lon_looked_data[:, -1]) < 0:
+            # if AP on left, NA on right, asc
+            track_dirn = 'A'
+        else:
+            # if NA on left, AP on right, dsc
+            track_dirn = 'D'
+
+
+        for i in range(len(lon_grad_lr)):
+            lr_row = lon_grad_lr[i, :]
+            rl_row = lon_grad_rl[i, :]
+            # import pdb; pdb.set_trace()
+            if track_dirn == 'A':
+                lr_ind = int(np.argwhere(lr_row < 0)[0])  # get first occurrence of drop +180 to -180
+                rl_ind = int(np.argwhere(rl_row > 0)[0])  # get first occurrence of rise -180 to +180
+            else:
+                lr_ind = int(np.argwhere(lr_row > 0)[0])  # get first occurrence of rise -180 to +180
+                rl_ind = int(np.argwhere(rl_row < 0)[0])  # get first occurrence of drop +180 to -180
+
+            # print(f"for row {i} lr_ind: {lr_ind}, rl_ind:{rl_ind}")
+            lon_looked_data_temp[i, lr_ind + 1:-rl_ind + 1] = np.nan
+
+        # get the AP limit
+        AP_West = np.nanmin(np.where(lon_looked_data_temp > 0, lon_looked_data_temp, np.inf))
+        AP_East = np.nanmax(np.where(lon_looked_data_temp > 0, lon_looked_data_temp, -np.inf))
+
+        NA_West = np.nanmin(np.where(lon_looked_data_temp < 0, lon_looked_data_temp, np.inf))
+        NA_East = np.nanmax(np.where(lon_looked_data_temp < 0, lon_looked_data_temp, -np.inf))
+        bounds = [(AP_West, AP_East), (NA_West, NA_East)]
+
+    return bounds
+
+
 def cmdLineParse():
     """
     Command line parser.
@@ -262,33 +311,45 @@ if __name__ == '__main__':
 
         lat_max = np.amax(lat_looked_data)
         lat_min = np.amin(lat_looked_data)
-        lon_max = np.amax(lon_looked_data)
-        lon_min = np.amin(lon_looked_data)
-        bbox = "{}/{}/{}/{}".format(lat_min, lat_max, lon_min, lon_max)
+        lon_minmax = post_process_lon_max(lon_looked_data)
 
-        logr_looked_geo = 'logr_%02d_%drlks_%dalks.float.geo' % (i+1,inps.rlks,inps.alks)
-        cmd = "{}/geo_with_ll.py -input {} -output {} -lat {} -lon {} -bbox={} -ssize {} -rmethod {}".format(
-            SCR_DIR,
-            logr_looked, 
-            logr_looked_geo,
-            lat_looked,
-            lon_looked,
-            bbox,
-            1.0,
-            1)
-        runCmd(cmd)
+        if len(lon_minmax) == 1:
+            # normal case
+            lon_min, lon_max = lon_minmax[0]
+            bbox = [lat_min, lat_max, lon_min, lon_max]
+            print(f"lat_min:{lat_min}. lat_max:{lat_max}, lon_min:{lon_min}, lon_max:{lon_max}")
+            print(f"bbox:{bbox}")
+            logr_looked_geo = 'logr_%02d_%drlks_%dalks.float.geo' % (i + 1, inps.rlks, inps.alks)
+            cmd = f"{SCR_DIR}/geo_with_ll.py -input {logr_looked} -output {logr_looked_geo} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox}\" -ssize {inps.ssize} -rmethod 1"
+            runCmd(cmd)
 
-        amp_looked_geo = 'amp_%02d_%drlks_%dalks.amp.geo' % (i+1,inps.rlks,inps.alks)
-        cmd = "{}/geo_with_ll.py -input {} -output {} -lat {} -lon {} -bbox={} -ssize {} -rmethod {}".format(
-            SCR_DIR,
-            amp_looked,
-            amp_looked_geo,
-            lat_looked,
-            lon_looked,
-            bbox,
-            inps.ssize,
-            1)
-        runCmd(cmd)
+            amp_looked_geo = 'amp_%02d_%drlks_%dalks.amp.geo' % (i + 1, inps.rlks, inps.alks)
+            cmd = f"{SCR_DIR}/geo_with_ll.py -input {amp_looked} -output {amp_looked_geo} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox}\" -ssize {inps.ssize} -rmethod 1"
+            runCmd(cmd)
+
+        else:
+            # case where it passes anti-meridian, we geocode twice:
+            lon_min_ap, lon_max_ap = lon_minmax[0]
+            lon_min_na, lon_max_na = lon_minmax[1]
+            bbox_ap = [lat_min, lat_max, lon_min_ap, lon_max_ap]
+            bbox_na = [lat_min, lat_max, lon_min_na, lon_max_na]
+            logr_looked_geo_ap = 'logr_%02d_%drlks_%dalks_AP.float.geo' % (i + 1, inps.rlks, inps.alks)
+            logr_looked_geo_na = 'logr_%02d_%drlks_%dalks_NA.float.geo' % (i + 1, inps.rlks, inps.alks)
+            cmd = f"{SCR_DIR}/geo_with_ll.py -input {logr_looked} -output {logr_looked_geo_ap} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox_ap}\" -ssize {inps.ssize} -rmethod 1 && " \
+                  f"{SCR_DIR}/geo_with_ll.py -input {logr_looked} -output {logr_looked_geo_na} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox_na}\" -ssize {inps.ssize} -rmethod 1"
+            runCmd(cmd)
+
+            amp_looked_geo_ap = 'amp_%02d_%drlks_%dalks_AP.amp.geo' % (i + 1, inps.rlks, inps.alks)
+            amp_looked_geo_na = 'amp_%02d_%drlks_%dalks_NA.amp.geo' % (i + 1, inps.rlks, inps.alks)
+            cmd = f"{SCR_DIR}/geo_with_ll.py -input {amp_looked} -output {amp_looked_geo_ap} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox_ap}\" -ssize {inps.ssize} -rmethod 1 && " \
+                  f"{SCR_DIR}/geo_with_ll.py -input {amp_looked} -output {amp_looked_geo_ap} " \
+                  f"-lat {lat_looked} -lon {lon_looked} -bbox \"{bbox_na}\" -ssize {inps.ssize} -rmethod 1"
+            runCmd(cmd)
 
         os.remove(amp)
         os.remove(amp_looked)
